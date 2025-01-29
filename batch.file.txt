@@ -1,0 +1,52 @@
+@echo off
+
+:: Define variables
+SET REPO_URL=https://github.com/your-username/your-repository.git
+SET BRANCH=main
+SET WORKSPACE=C:\jenkins_workspace
+SET BUILD_DIR=%WORKSPACE%\build
+SET DEPLOY_DIR=%WORKSPACE%\deploy
+SET TEST_SCRIPT=%WORKSPACE%\scripts\run_tests.bat
+
+:: Step 1: Clone the repository
+echo Cloning the Git repository...
+IF EXIST %WORKSPACE% (
+    rmdir /S /Q %WORKSPACE%
+)
+mkdir %WORKSPACE%
+cd %WORKSPACE%
+git clone -b %BRANCH% %REPO_URL% .
+IF %ERRORLEVEL% NEQ 0 (
+    echo Error: Failed to clone the repository.
+    exit /b 1
+)
+
+:: Step 2: Build the application
+echo Building the application...
+mkdir %BUILD_DIR%
+echo Compiling code... > %BUILD_DIR%\build_status.txt
+
+:: Step 3: Run tests
+echo Running tests...
+IF EXIST %TEST_SCRIPT% (
+    call %TEST_SCRIPT%
+) ELSE (
+    echo No test script found. Skipping tests.
+)
+
+:: Step 4: Deploy the application
+echo Deploying the application...
+mkdir %DEPLOY_DIR%
+copy %BUILD_DIR%\*.* %DEPLOY_DIR% /Y
+IF %ERRORLEVEL% NEQ 0 (
+    echo Error: Deployment failed.
+    exit /b 1
+)
+echo Deployment completed successfully!
+
+:: Step 5: Cleanup (optional)
+echo Cleaning up temporary files...
+del /Q %WORKSPACE%\*.tmp
+
+echo Pipeline completed successfully!
+exit /b 0
